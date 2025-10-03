@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  fastapi:
+    build: .
+    container_name: damaihelper-fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      # 数据库连接配置（从.env文件加载或在此处直接设置）
+      # DATABASE_URL: postgresql://username:password@host:port/database
+      # 或使用单独的数据库配置项
+      # DB_USER: postgres
+      # DB_PASSWORD: your_password
+      # DB_HOST: host.docker.internal  # 连接到宿主机上的PostgreSQL
+      # DB_PORT: 5432
+      # DB_NAME: damaihelper
+    volumes:
+      - .:/app  # 开发模式下挂载当前目录，便于代码修改
+      - ./logs:/app/logs  # 挂载日志目录
+      - ./config:/app/config  # 挂载配置目录
+    depends_on:
+      # 如果您希望docker-compose也管理PostgreSQL容器，可以取消下面的注释
+      # db:
+      #   condition: service_healthy
+    restart: unless-stopped
+
+  # 如果您希望docker-compose也管理PostgreSQL容器，可以取消下面的注释
+  # db:
+  #   image: postgres:14-alpine
+  #   container_name: damaihelper-postgres
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: your_password
+  #     POSTGRES_DB: damaihelper
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   restart: unless-stopped
+
+# 如果启用了PostgreSQL容器，取消下面的注释
+# volumes:
+#   postgres_data:
