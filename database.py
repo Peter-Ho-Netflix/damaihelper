@@ -3,6 +3,8 @@ from typing import Optional, List, Dict, Any
 import os
 import urllib.parse
 from datetime import datetime
+# 导入SQLAlchemy特定类型用于JSON字段
+from sqlalchemy import Column, JSON
 
 # 尝试从.env文件加载环境变量
 try:
@@ -111,7 +113,7 @@ class TicketTask(SQLModel, table=True):
     status: str = Field(default="pending", description="任务状态: pending, started, processing, completed, failed")
     progress: int = Field(default=0, description="任务进度")
     message: Optional[str] = Field(description="状态消息")
-    result: Optional[Dict[str, Any]] = Field(sa_column_type="JSONB", description="任务结果")
+    result: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="任务结果")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"onupdate": datetime.now})
     

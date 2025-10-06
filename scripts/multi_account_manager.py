@@ -1,4 +1,5 @@
-from selenium_driver import start_selenium_driver
+from .selenium_driver import start_selenium_driver
+from selenium.webdriver.common.by import By
 
 def manage_multiple_accounts(account_info, ticket_settings):
     target_url = account_info['target_url']
