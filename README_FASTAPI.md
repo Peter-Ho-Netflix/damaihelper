@@ -164,6 +164,7 @@ ws://localhost:8000/ws/task/{task_id}
 
 ```jsx
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
 function TicketAssistant() {
   const [taskId, setTaskId] = useState('');
@@ -174,7 +175,7 @@ function TicketAssistant() {
 
   // 创建抢票任务
   const createTicketTask = async () => {
-    const response = await fetch('http://localhost:8000/api/ticket/task', {
+    const response = await axios.fetch('http://localhost:8000/api/ticket/task', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ function TicketAssistant() {
       })
     });
     
-    const data = await response.json();
+    const data = await response.data;
     setTaskId(data.task_id);
     
     // 建立WebSocket连接
@@ -258,12 +259,127 @@ function TicketAssistant() {
 export default TicketAssistant;
 ```
 
-## 注意事项
-
 1. 确保ChromeDriver与您的Chrome浏览器版本兼容
 2. 生产环境中应修改CORS配置，限制允许的域名
 3. 建议使用环境变量存储敏感信息，如账户密码等
 4. 对于大规模并发，可能需要调整服务器配置和任务调度策略
+
+## WPF / MAUI 示例
+
+以下是一个简单的WPF / MAUI组件示例，展示如何调用FastAPI后端：
+
+```xaml
+<Window x:Class="TicketAssistantWPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="大麦抢票助手" Height="450" Width="800">
+    <Grid>
+        <StackPanel Margin="20">
+            <Label Content="购票链接:"/>
+            <TextBox x:Name="TicketUrlTextBox" Margin="0,5"/>
+            <Button x:Name="CreateTaskButton" Content="创建任务" Margin="0,10" Click="CreateTaskButton_Click"/>
+            <Label x:Name="TaskStatusLabel" Content="任务状态:" Margin="0,5"/>
+            <ProgressBar x:Name="ProgressBar" Margin="0,5" Height="20" Value="0"/>
+            <Label x:Name="ProgressLabel" Content="进度: 0%" Margin="0,5"/>
+        </StackPanel>
+    </Grid>
+</Window>
+```
+```csharp
+using System;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows;
+
+namespace TicketAssistantWPF
+{
+    public partial class MainWindow : Window
+    {
+        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly string _baseUrl = "http://localhost:8000";
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private async void CreateTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            var ticketUrl = TicketUrlTextBox.Text;
+            if (string.IsNullOrEmpty(ticketUrl))
+            {
+                MessageBox.Show("请输入购票链接");
+                return;
+            }
+            
+            // 调用FastAPI创建任务
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/ticket/task", new StringContent(
+                JsonSerializer.Serialize(new
+                {
+                    accounts = new[] { new { username = "your_username", password = "your_password", platform = "damai" } },
+                    ticket_settings = new { url = ticketUrl, retry_interval = 5 }
+                }),
+                Encoding.UTF8,
+                "application/json"));
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var data = await response.Content.ReadAsStringAsync();
+                var taskId = JsonSerializer.Deserialize<Dictionary<string, string>>(data)["task_id"];
+                MessageBox.Show($"任务创建成功，任务ID: {taskId}");
+            }
+            else
+            {
+                MessageBox.Show("任务创建失败");
+            }
+        }
+    }
+}
+```
+
+## SwiftUI 示例
+
+```swift
+import SwiftUI
+
+struct TicketAssistantView: View {
+    @State private var ticketUrl = ""
+    @State private var taskId: String? = nil
+    @State private var taskStatus: TaskStatus = .init(status: "", progress: 0, message: "")
+    
+    var body: some View {
+        VStack {
+            TextField("输入购票链接", text: $ticketUrl)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            
+            Button("创建任务") {
+                createTicketTask()
+            }
+            .padding()
+            
+            if let taskId = taskId {
+                Text("任务ID: \(taskId)")
+                    .padding()
+            }
+            
+            Text("进度: \(taskStatus.progress)%")
+                .padding()
+            
+            Text("状态: \(taskStatus.status)")
+                .padding()
+            
+            Text("消息: \(taskStatus.message)")
+                .padding()
+        }
+    }
+    
+    private func createTicketTask() {
+        // 调用FastAPI创建任务
+        // ...
+    }
+}
+```
 
 ## 故障排除
 

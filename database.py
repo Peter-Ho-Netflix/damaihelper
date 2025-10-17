@@ -9,10 +9,14 @@ from sqlalchemy import Column, JSON
 # 尝试从.env文件加载环境变量
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # 显式指定UTF-8编码加载.env文件
+    load_dotenv(encoding='utf-8')
     print("成功从.env文件加载环境变量")
 except ImportError:
     print("未安装python-dotenv库，将直接使用系统环境变量")
+except UnicodeDecodeError:
+    print("警告：.env文件编码错误，尝试使用系统默认编码")
+    load_dotenv()
 
 # 数据库连接配置类
 class DatabaseConfig:
@@ -144,7 +148,7 @@ class TaskLog(SQLModel, table=True):
     task_id: Optional[int] = Field(foreign_key="ticket_tasks.id", description="关联的任务ID")
     log_level: str = Field(description="日志级别: info, warning, error")
     message: str = Field(description="日志消息")
-    details: Optional[Dict[str, Any]] = Field(sa_column_type="JSONB", description="详细信息")
+    details: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="详细信息")
     created_at: datetime = Field(default_factory=datetime.now)
 
 # 数据库初始化函数

@@ -1,3 +1,4 @@
+from typing import Dict, List, Optional, Set
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Depends
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,7 +73,7 @@ class TaskStatusResponse(BaseModel):
 
 # 辅助函数
 def load_config():
-    with open('config/config.json', 'r') as f:
+    with open('config/config.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
 async def update_task_status(task_id: str, status: str, progress: int, message: str, result: Optional[Dict] = None):

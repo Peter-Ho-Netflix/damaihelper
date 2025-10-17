@@ -4,7 +4,7 @@
 用于验证PostgreSQL数据库配置是否正确
 """
 
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field, create_engine, Session, text
 import os
 import urllib.parse
 from datetime import datetime
@@ -13,6 +13,21 @@ import sys
 def test_db_connection():
     """测试数据库连接和基本操作"""
     print("=== PostgreSQL数据库连接测试 ===")
+    
+    # 尝试从.env文件加载环境变量
+    try:
+        from dotenv import load_dotenv
+        # 显式指定UTF-8编码加载.env文件
+        load_dotenv(encoding='utf-8')
+        print("成功从.env文件加载环境变量")
+    except ImportError:
+        print("未安装python-dotenv库，将直接使用系统环境变量")
+    except UnicodeDecodeError:
+        print("警告：.env文件编码错误，尝试使用系统默认编码")
+        try:
+            load_dotenv()
+        except:
+            print("使用系统默认编码加载.env文件也失败")
     
     # 获取数据库URL
     db_url = os.getenv("DATABASE_URL")
@@ -25,6 +40,8 @@ def test_db_connection():
         db_host = os.getenv("DB_HOST", "localhost")
         db_port = os.getenv("DB_PORT", "5432")
         db_name = os.getenv("DB_NAME", "damaihelper")
+        
+        print(f"从环境变量获取的配置：DB_USER={db_user}, DB_PASSWORD=********, DB_HOST={db_host}, DB_PORT={db_port}, DB_NAME={db_name}")
         
         # 构建连接URL
         db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
@@ -50,7 +67,7 @@ def test_db_connection():
             print("✅ 数据库连接成功！")
             
             # 检查数据库版本
-            result = conn.execute("SELECT version()")
+            result = conn.execute(text("SELECT version()"))
             version = result.scalar()
             print(f"数据库版本: {version.split(' ')[1]}")
         
@@ -103,12 +120,16 @@ def test_db_connection():
         
     except Exception as e:
         print(f"❌ 数据库操作失败: {str(e)}")
+        import traceback
+        print(f"错误详情: {traceback.format_exc()}")
         print("\n=== 故障排查建议 ===")
         print("1. 请确认PostgreSQL服务是否正在运行")
         print("2. 检查数据库凭证（用户名和密码）是否正确")
         print("3. 确认数据库名称是否存在")
         print("4. 检查防火墙设置是否允许连接到PostgreSQL端口")
         print("5. 查看README_DB.md文件获取详细配置指南")
+        print("6. 检查.env文件是否包含非UTF-8编码字符")
+        print("7. 尝试删除或重新创建.env文件，确保使用UTF-8编码")
         sys.exit(1)
     
 if __name__ == "__main__":
